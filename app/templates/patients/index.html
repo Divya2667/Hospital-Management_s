@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Patients - Hospital Management System{% endblock %}
+{% block page_title %}Patient Directory{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <!-- Top Header & Action Row -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h2 class="h4 fw-bold mb-1" style="color: var(--primary-teal);">Patients Registry</h2>
+      <p class="text-secondary small mb-0">
+        Total {{ total_count }} registered patients &bull; {{ active_count }} active
+      </p>
+    </div>
+    <div>
+      <a href="{{ url_for('patients.create') }}" class="btn text-white shadow-sm d-inline-flex align-items-center gap-2" style="background-color: var(--primary-teal);" id="btn-add-patient">
+        <i class="bi bi-person-plus-fill"></i>
+        <span>Register New Patient</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Search & Filter Controls -->
+  <div class="card p-3 border-0 bg-white shadow-sm rounded-3 mb-4">
+    <div class="row g-3 align-items-center">
+      <!-- Search Form -->
+      <div class="col-12 col-md-6 col-lg-7">
+        <form method="GET" action="{{ url_for('patients.index') }}" class="d-flex gap-2">
+          {% if status_filter != 'all' %}
+            <input type="hidden" name="status" value="{{ status_filter }}">
+          {% endif %}
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0 text-muted">
+              <i class="bi bi-search"></i>
+            </span>
+            <input 
+              type="text" 
+              class="form-control border-start-0" 
+              name="search" 
+              placeholder="Search by Patient Name or ID..." 
+              value="{{ search }}"
+              id="input-search-patient"
+            >
+            <button class="btn btn-primary-custom px-3" type="submit" style="width: auto;">Search</button>
+          </div>
+          {% if search %}
+            <a href="{{ url_for('patients.index', status=status_filter) }}" class="btn btn-outline-secondary" title="Clear search">
+              <i class="bi bi-x-lg"></i>
+            </a>
+          {% endif %}
+        </form>
+      </div>
+
+      <!-- Status Filter Buttons -->
+      <div class="col-12 col-md-6 col-lg-5 d-flex justify-content-md-end gap-2">
+        <a href="{{ url_for('patients.index', search=search, status='all') }}" 
+           class="btn btn-sm {% if status_filter == 'all' %}btn-dark{% else %}btn-outline-secondary{% endif %}">
+          All ({{ total_count }})
+        </a>
+        <a href="{{ url_for('patients.index', search=search, status='active') }}" 
+           class="btn btn-sm {% if status_filter == 'active' %}btn-success{% else %}btn-outline-success{% endif %}">
+          Active ({{ active_count }})
+        </a>
+        <a href="{{ url_for('patients.index', search=search, status='inactive') }}" 
+           class="btn btn-sm {% if status_filter == 'inactive' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+          Inactive ({{ inactive_count }})
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Patient Listing Table Card -->
+  <div class="card-table">
+    <div class="card-table-header">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-people text-secondary"></i>
+        <h3 class="h6 mb-0 fw-semibold">Patient Records ({{ patients|length }})</h3>
+      </div>
+      {% if search %}
+        <span class="badge bg-light text-muted border">Filtered by: "{{ search }}"</span>
+      {% endif %}
+    </div>
+
+    {% if patients %}
+      <div class="table-responsive">
+        <table class="table table-custom align-middle" id="patients-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Patient Name</th>
+              <th>Age & Gender</th>
+              <th>Blood Group</th>
+              <th>Status</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for patient in patients %}
+              <tr>
+                <td>
+                  <span class="fw-bold text-secondary">#{{ patient['Patient_id'] }}</span>
+                </td>
+                <td>
+                  <a href="{{ url_for('patients.detail', patient_id=patient['Patient_id']) }}" class="fw-semibold text-dark text-decoration-none hover-teal">
+                    {{ patient['P_Name'] }}
+                  </a>
+                  <br><small class="text-muted">Registered: {{ patient['created_at'][:10] if patient['created_at'] else 'N/A' }}</small>
+                </td>
+                <td>
+                  <span class="fw-medium">{{ patient['P_Age'] }} yrs</span>
+                  <span class="text-muted small">&bull; {{ patient['P_Gender'] }}</span>
+                </td>
+                <td>
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+                    <i class="bi bi-droplet-fill me-1"></i>{{ patient['Blood_Group'] }}
+                  </span>
+                </td>
+                <td>
+                  {% if patient['is_active'] == 1 %}
+                    <span class="badge badge-status badge-completed">Active</span>
+                  {% else %}
+                    <span class="badge badge-status badge-cancelled">Inactive</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <div class="d-inline-flex gap-1">
+                    <!-- View Details -->
+                    <a href="{{ url_for('patients.detail', patient_id=patient['Patient_id']) }}" 
+                       class="btn btn-sm btn-outline-primary" title="View History & Details">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                    <!-- Edit -->
+                    <a href="{{ url_for('patients.edit', patient_id=patient['Patient_id']) }}" 
+                       class="btn btn-sm btn-outline-secondary" title="Edit Patient Details">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <!-- Toggle Status (POST) -->
+                    <form method="POST" action="{{ url_for('patients.toggle_status', patient_id=patient['Patient_id']) }}" class="d-inline m-0">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" 
+                              class="btn btn-sm {% if patient['is_active'] == 1 %}btn-outline-warning{% else %}btn-outline-success{% endif %}" 
+                              title="{% if patient['is_active'] == 1 %}Deactivate Patient{% else %}Reactivate Patient{% endif %}">
+                        <i class="bi {% if patient['is_active'] == 1 %}bi-slash-circle{% else %}bi-check-circle{% endif %}"></i>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon">
+          <i class="bi bi-person-x"></i>
+        </div>
+        <h4 class="h6 fw-semibold text-secondary mb-1">No Patient Records Found</h4>
+        <p class="small text-muted mb-3">
+          {% if search %}
+            No patients match your search criteria "{{ search }}". Try another name or ID.
+          {% else %}
+            The patient registry is currently empty. Register your first patient to begin.
+          {% endif %}
+        </p>
+        <a href="{{ url_for('patients.create') }}" class="btn btn-sm text-white px-3" style="background-color: var(--primary-teal);">
+          <i class="bi bi-person-plus me-1"></i> Register Patient
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

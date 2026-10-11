@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Doctor #{{ doctor['Doctor_ID'] }} - {{ doctor['D_Name'] }}{% endblock %}
+{% block page_title %}Doctor Profile & Clinical Schedule{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <!-- Back Link -->
+  <div class="mb-3">
+    <a href="{{ url_for('doctors.index') }}" class="text-secondary text-decoration-none small d-inline-flex align-items-center gap-1">
+      <i class="bi bi-arrow-left"></i>
+      <span>Back to Doctors Registry</span>
+    </a>
+  </div>
+
+  <!-- Doctor Summary Header Card -->
+  <div class="card border-0 shadow-sm rounded-3 bg-white p-4 mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold fs-3"
+             style="width: 64px; height: 64px; background: linear-gradient(135deg, var(--dark-teal), var(--primary-teal));">
+          <i class="bi bi-heart-pulse"></i>
+        </div>
+        <div>
+          <div class="d-flex align-items-center gap-2">
+            <h2 class="h4 fw-bold mb-0 text-dark">{{ doctor['D_Name'] }}</h2>
+            <span class="badge bg-light text-secondary border">ID: #{{ doctor['Doctor_ID'] }}</span>
+            {% if doctor['is_active'] == 1 %}
+              <span class="badge badge-status badge-completed">Active (On-Duty)</span>
+            {% else %}
+              <span class="badge badge-status badge-cancelled">Inactive (Off-Duty)</span>
+            {% endif %}
+          </div>
+          <p class="text-secondary small mb-0 mt-1">
+            <i class="bi bi-mortarboard me-1"></i> {{ doctor['D_Qualification'] }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Actions Toolbar -->
+      <div class="d-flex flex-wrap gap-2">
+        <!-- Edit Button -->
+        <a href="{{ url_for('doctors.edit', doctor_id=doctor['Doctor_ID']) }}" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1 shadow-sm">
+          <i class="bi bi-pencil"></i>
+          <span>Edit Credentials</span>
+        </a>
+
+        <!-- Toggle Duty Status Form -->
+        <form method="POST" action="{{ url_for('doctors.toggle_status', doctor_id=doctor['Doctor_ID']) }}" class="m-0">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-sm {% if doctor['is_active'] == 1 %}btn-outline-warning{% else %}btn-outline-success{% endif %} d-inline-flex align-items-center gap-1 shadow-sm">
+            <i class="bi {% if doctor['is_active'] == 1 %}bi-slash-circle{% else %}bi-check-circle{% endif %}"></i>
+            <span>{{ 'Set Off-Duty (Deactivate)' if doctor['is_active'] == 1 else 'Set On-Duty (Reactivate)' }}</span>
+          </button>
+        </form>
+
+        <!-- Delete Trigger Modal Button -->
+        <button type="button" class="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#deleteDoctorModal">
+          <i class="bi bi-trash"></i>
+          <span>Delete</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Credentials & Workload Details Row -->
+    <div class="row g-3 mt-3 pt-3 border-top">
+      <div class="col-6 col-md-3">
+        <span class="d-block text-muted small">Clinical Experience</span>
+        <span class="fw-semibold text-dark fs-6">{{ doctor['Experience'] }} Years</span>
+      </div>
+      <div class="col-6 col-md-3">
+        <span class="d-block text-muted small">Direct Contact</span>
+        <span class="fw-semibold text-dark fs-6">{{ doctor['D_Phone'] }}</span>
+      </div>
+      <div class="col-6 col-md-3">
+        <span class="d-block text-muted small">Scheduled Upcoming</span>
+        <span class="fw-bold text-warning fs-6">{{ scheduled_count }} Appointments</span>
+      </div>
+      <div class="col-6 col-md-3">
+        <span class="d-block text-muted small">Completed Consultations</span>
+        <span class="fw-bold text-success fs-6">{{ completed_count }} Completed</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assigned Appointments Section -->
+  <div class="card-table mb-4">
+    <div class="card-table-header">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-calendar3 text-secondary"></i>
+        <h3 class="h6 mb-0 fw-semibold">Clinical Schedule & Assigned Appointments ({{ appointments|length }})</h3>
+      </div>
+      {% if 'appointments.create' in current_app.view_functions and doctor['is_active'] == 1 %}
+        <a href="{{ url_for('appointments.create', doctor_id=doctor['Doctor_ID']) }}" class="btn btn-sm btn-outline-primary py-0">
+          + Book Appointment
+        </a>
+      {% endif %}
+    </div>
+
+    {% if appointments %}
+      <div class="table-responsive">
+        <table class="table table-custom align-middle">
+          <thead>
+            <tr>
+              <th>Schedule Date & Time</th>
+              <th>Patient Name</th>
+              <th>Blood Group</th>
+              <th>Clinical Reason</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for appt in appointments %}
+              <tr>
+                <td>
+                  <div class="fw-semibold text-dark">{{ appt['A_Date'] }}</div>
+                  <small class="text-muted">{{ appt['A_Time'] }} ({{ appt['Duration_Min'] }}m)</small>
+                </td>
+                <td>
+                  <a href="{{ url_for('patients.detail', patient_id=appt['Patient_id']) }}" class="fw-semibold text-dark text-decoration-none hover-teal">
+                    {{ appt['Patient_Name'] }}
+                  </a>
+                  <br><small class="text-muted">ID: #{{ appt['Patient_id'] }}</small>
+                </td>
+                <td>
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 small">
+                    {{ appt['Blood_Group'] }}
+                  </span>
+                </td>
+                <td>
+                  <span class="text-truncate d-inline-block" style="max-width: 180px;" title="{{ appt['Reason'] }}">
+                    {{ appt['Reason'] }}
+                  </span>
+                </td>
+                <td>
+                  {% if appt['Status'] == 'Scheduled' %}
+                    <span class="badge badge-status badge-scheduled">Scheduled</span>
+                  {% elif appt['Status'] == 'Completed' %}
+                    <span class="badge badge-status badge-completed">Completed</span>
+                  {% else %}
+                    <span class="badge badge-status badge-cancelled">Cancelled</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state py-4">
+        <div class="empty-state-icon" style="font-size: 2rem;">
+          <i class="bi bi-calendar-check"></i>
+        </div>
+        <p class="small text-muted mb-0">No clinical appointments have been assigned to {{ doctor['D_Name'] if doctor['D_Name'].startswith('Dr.') else 'Dr. ' ~ doctor['D_Name'] }} yet.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Safe Delete Confirmation Modal -->
+<div class="modal fade" id="deleteDoctorModal" tabindex="-1" aria-labelledby="deleteDoctorModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold text-danger" id="deleteDoctorModalLabel">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>Delete Doctor Record
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete <strong>{{ doctor['D_Name'] if doctor['D_Name'].startswith('Dr.') else 'Dr. ' ~ doctor['D_Name'] }}</strong> (ID: #{{ doctor['Doctor_ID'] }})?</p>
+        <div class="alert alert-warning small mb-0">
+          <i class="bi bi-shield-exclamation me-1"></i>
+          <strong>Integrity Protection:</strong> If this doctor has assigned appointment records, the database foreign keys will block deletion to preserve patient appointment history. Please deactivate the doctor instead.
+        </div>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
+        <form method="POST" action="{{ url_for('doctors.delete', doctor_id=doctor['Doctor_ID']) }}" class="m-0">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-danger" id="btn-confirm-delete-doctor">
+            Confirm Delete
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

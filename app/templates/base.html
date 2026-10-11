@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Dashboard{% endblock %} - Hospital Management System</title>
+  
+  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  
+  <!-- Custom Design System Styles -->
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+  {% block styles %}{% endblock %}
+</head>
+<body>
+  <div class="app-wrapper">
+    <!-- Mobile Sidebar Backdrop -->
+    <div class="sidebar-backdrop"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar-wrapper">
+      <a href="{{ url_for('dashboard.index') }}" class="sidebar-brand">
+        <div class="brand-badge">
+          <i class="bi bi-hospital"></i>
+        </div>
+        <div>
+          <div class="fw-bold fs-6 lh-1" style="color: var(--primary-teal);">Hospital Portal</div>
+          <small class="text-muted" style="font-size: 0.725rem;">Management System</small>
+        </div>
+      </a>
+
+      <div class="sidebar-nav">
+        <div class="nav-section-title">Operations</div>
+        
+        <!-- Dashboard Link -->
+        <a href="{{ url_for('dashboard.index') }}" 
+           class="nav-link-custom {% if request.endpoint == 'dashboard.index' %}active{% endif %}"
+           id="nav-dashboard">
+          <i class="bi bi-speedometer2"></i>
+          <span>Dashboard</span>
+        </a>
+
+        <!-- Patients Link -->
+        <a href="{{ url_for('patients.index') if 'patients.index' in current_app.view_functions else url_for('dashboard.index') }}" 
+           class="nav-link-custom {% if request.endpoint and request.endpoint.startswith('patients.') %}active{% endif %}"
+           id="nav-patients">
+          <i class="bi bi-people"></i>
+          <span>Patients</span>
+        </a>
+
+        <!-- Doctors Link -->
+        <a href="{{ url_for('doctors.index') if 'doctors.index' in current_app.view_functions else url_for('dashboard.index') }}" 
+           class="nav-link-custom {% if request.endpoint and request.endpoint.startswith('doctors.') %}active{% endif %}"
+           id="nav-doctors">
+          <i class="bi bi-heart-pulse"></i>
+          <span>Doctors</span>
+        </a>
+
+        <!-- Appointments Link -->
+        <a href="{{ url_for('appointments.index') if 'appointments.index' in current_app.view_functions else url_for('dashboard.index') }}" 
+           class="nav-link-custom {% if request.endpoint and request.endpoint.startswith('appointments.') %}active{% endif %}"
+           id="nav-appointments">
+          <i class="bi bi-calendar3"></i>
+          <span>Appointments</span>
+        </a>
+
+        <!-- Billing Link -->
+        <a href="{{ url_for('billing.index') if 'billing.index' in current_app.view_functions else url_for('dashboard.index') }}" 
+           class="nav-link-custom {% if request.endpoint and request.endpoint.startswith('billing.') %}active{% endif %}"
+           id="nav-billing">
+          <i class="bi bi-credit-card-2-front"></i>
+          <span>Billing</span>
+        </a>
+      </div>
+
+      <!-- User Profile & Sign Out Footer -->
+      <div class="sidebar-footer">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="user-badge-box">
+            <div class="user-avatar-initials">
+              {{ g.user['Username'][0]|upper if g.user and g.user['Username'] else 'U' }}
+            </div>
+            <div>
+              <div class="fw-semibold text-truncate small" style="max-width: 100px;">
+                {{ g.user['Username'] if g.user else 'User' }}
+              </div>
+              <span class="badge bg-secondary-subtle text-secondary py-0 px-1" style="font-size: 0.7rem;">
+                {{ g.user['Role'] if g.user else 'Staff' }}
+              </span>
+            </div>
+          </div>
+          
+          <!-- Secure POST Logout Form -->
+          <form method="POST" action="{{ url_for('auth.logout') }}" class="m-0">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-danger btn-sm p-1 px-2 border-0" title="Sign Out" id="btn-logout">
+              <i class="bi bi-box-arrow-right fs-6"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div id="page-content-wrapper">
+      <!-- Top Navigation Bar -->
+      <header class="top-navbar">
+        <div class="d-flex align-items-center gap-3">
+          <button class="btn btn-sm btn-light border d-lg-none" id="sidebarToggle" aria-label="Toggle navigation menu">
+            <i class="bi bi-list fs-5"></i>
+          </button>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge badge-portal-tag">HMS</span>
+            <h1 class="h6 mb-0 fw-bold text-dark">
+              {% block page_title %}Hospital Administration Portal{% endblock %}
+            </h1>
+          </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 gap-sm-3">
+          <!-- Keyboard shortcut search trigger -->
+          <button type="button" class="btn btn-sm btn-light border d-none d-md-inline-flex align-items-center gap-2 text-muted px-2 py-1 rounded-3" data-bs-toggle="modal" data-bs-target="#quickNavModal" id="btn-quick-nav" title="Quick Navigation (Ctrl+K)">
+            <i class="bi bi-search text-teal"></i>
+            <span class="small">Search / Jump</span>
+            <kbd class="bg-white border text-secondary px-1 py-0 small font-monospace" style="font-size: 0.65rem;">Ctrl K</kbd>
+          </button>
+
+          <!-- Clinic Hours Status with Live Pulse -->
+          <span class="badge bg-light text-dark border d-none d-sm-inline-flex align-items-center gap-2 small py-1 px-2 rounded-pill shadow-xs">
+            <span class="pulse-indicator"></span>
+            <span>Hours: {{ config['CLINIC_OPEN_TIME'] }} - {{ config['CLINIC_CLOSE_TIME'] }}</span>
+          </span>
+
+          <!-- Dark / Light Mode Toggle Button -->
+          <button type="button" class="btn btn-sm btn-light border p-2 rounded-3 text-secondary d-flex align-items-center justify-content-center" id="themeToggleBtn" title="Toggle Dark / Light Theme" aria-label="Toggle theme">
+            <i class="bi bi-moon-stars" id="themeIcon"></i>
+          </button>
+
+          <!-- Quick Action Dropdown -->
+          <div class="dropdown">
+            <button class="btn btn-sm btn-primary-custom d-flex align-items-center gap-1 dropdown-toggle py-1 px-2 px-md-3 shadow-xs" type="button" id="quickActionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-plus-lg"></i>
+              <span class="d-none d-md-inline">Quick Action</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-md border-0 py-2 rounded-3" aria-labelledby="quickActionsDropdown" style="min-width: 210px;">
+              <li><h6 class="dropdown-header text-uppercase text-muted fw-bold small" style="font-size: 0.68rem; letter-spacing: 0.05em;">New Record</h6></li>
+              <li>
+                <a class="dropdown-item d-flex align-items-center gap-2 py-2 small" href="{{ url_for('patients.create') }}">
+                  <i class="bi bi-person-plus text-primary fs-6"></i>
+                  <span>Register Patient</span>
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item d-flex align-items-center gap-2 py-2 small" href="{{ url_for('doctors.create') }}">
+                  <i class="bi bi-heart-pulse text-teal fs-6"></i>
+                  <span>Add Doctor</span>
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item d-flex align-items-center gap-2 py-2 small" href="{{ url_for('appointments.create') }}">
+                  <i class="bi bi-calendar-plus text-warning fs-6"></i>
+                  <span>Book Appointment</span>
+                </a>
+              </li>
+              <li><hr class="dropdown-divider my-1"></li>
+              <li>
+                <a class="dropdown-item d-flex align-items-center gap-2 py-2 small" href="{{ url_for('billing.create') }}">
+                  <i class="bi bi-credit-card text-success fs-6"></i>
+                  <span>Issue Invoice</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Body Container -->
+      <main class="main-content">
+        <!-- Flash System Notifications -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-messages-container" aria-live="polite">
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-custom alert-dismissible fade show d-flex align-items-center shadow-sm" role="alert">
+                  <i class="bi {% if category == 'success' %}bi-check-circle-fill text-success{% elif category == 'info' %}bi-info-circle-fill text-info{% else %}bi-exclamation-triangle-fill text-danger{% endif %} fs-5 me-2 flex-shrink-0"></i>
+                  <div class="flex-grow-1 fw-medium">{{ message }}</div>
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <!-- Global Quick Navigation Modal (Ctrl + K) -->
+  <div class="modal fade" id="quickNavModal" tabindex="-1" aria-labelledby="quickNavModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="modal-header border-bottom bg-light px-3 py-2">
+          <div class="input-group">
+            <span class="input-group-text bg-transparent border-0 text-teal ps-1"><i class="bi bi-search fs-5"></i></span>
+            <input type="text" class="form-control border-0 bg-transparent fs-6" id="quickNavInput" placeholder="Type destination or keyword (e.g. patients, bill)..." autocomplete="off">
+          </div>
+          <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-2" style="max-height: 380px; overflow-y: auto;">
+          <div class="small text-muted mb-2 px-2 fw-semibold text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.05em;">Destinations</div>
+          <div class="list-group list-group-flush rounded-3" id="quickNavList">
+            <a href="{{ url_for('dashboard.index') }}" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between rounded-2 py-2 px-3 border-0 mb-1">
+              <span class="d-flex align-items-center gap-2"><i class="bi bi-speedometer2 text-teal fs-5"></i> <strong class="text-dark">Dashboard</strong> <span class="text-muted small">&bull; Overview & KPIs</span></span>
+              <kbd class="bg-light border text-muted px-1 small font-monospace">G + D</kbd>
+            </a>
+            <a href="{{ url_for('patients.index') }}" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between rounded-2 py-2 px-3 border-0 mb-1">
+              <span class="d-flex align-items-center gap-2"><i class="bi bi-people text-primary fs-5"></i> <strong class="text-dark">Patients</strong> <span class="text-muted small">&bull; Directory & Records</span></span>
+              <kbd class="bg-light border text-muted px-1 small font-monospace">G + P</kbd>
+            </a>
+            <a href="{{ url_for('doctors.index') }}" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between rounded-2 py-2 px-3 border-0 mb-1">
+              <span class="d-flex align-items-center gap-2"><i class="bi bi-heart-pulse text-teal fs-5"></i> <strong class="text-dark">Doctors</strong> <span class="text-muted small">&bull; Specialists & On-Duty</span></span>
+              <kbd class="bg-light border text-muted px-1 small font-monospace">G + DOC</kbd>
+            </a>
+            <a href="{{ url_for('appointments.index') }}" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between rounded-2 py-2 px-3 border-0 mb-1">
+              <span class="d-flex align-items-center gap-2"><i class="bi bi-calendar3 text-warning fs-5"></i> <strong class="text-dark">Appointments</strong> <span class="text-muted small">&bull; Scheduling & Slots</span></span>
+              <kbd class="bg-light border text-muted px-1 small font-monospace">G + A</kbd>
+            </a>
+            <a href="{{ url_for('billing.index') }}" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between rounded-2 py-2 px-3 border-0">
+              <span class="d-flex align-items-center gap-2"><i class="bi bi-credit-card-2-front text-success fs-5"></i> <strong class="text-dark">Billing</strong> <span class="text-muted small">&bull; Invoices & Revenue</span></span>
+              <kbd class="bg-light border text-muted px-1 small font-monospace">G + B</kbd>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Chart.js for Healthcare Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <!-- Canvas Confetti for Celebration Effects -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <!-- Main Application JS -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

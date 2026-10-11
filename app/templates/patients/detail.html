@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}Patient #{{ patient['Patient_id'] }} - {{ patient['P_Name'] }}{% endblock %}
+{% block page_title %}Patient Profile & History{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <!-- Back Link -->
+  <div class="mb-3">
+    <a href="{{ url_for('patients.index') }}" class="text-secondary text-decoration-none small d-inline-flex align-items-center gap-1">
+      <i class="bi bi-arrow-left"></i>
+      <span>Back to Patients Registry</span>
+    </a>
+  </div>
+
+  <!-- Patient Summary Header Card -->
+  <div class="card border-0 shadow-sm rounded-3 bg-white p-4 mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold fs-3"
+             style="width: 64px; height: 64px; background: linear-gradient(135deg, var(--dark-teal), var(--primary-teal));">
+          {{ patient['P_Name'][0]|upper }}
+        </div>
+        <div>
+          <div class="d-flex align-items-center gap-2">
+            <h2 class="h4 fw-bold mb-0 text-dark">{{ patient['P_Name'] }}</h2>
+            <span class="badge bg-light text-secondary border">ID: #{{ patient['Patient_id'] }}</span>
+            {% if patient['is_active'] == 1 %}
+              <span class="badge badge-status badge-completed">Active Patient</span>
+            {% else %}
+              <span class="badge badge-status badge-cancelled">Inactive</span>
+            {% endif %}
+          </div>
+          <p class="text-muted small mb-0 mt-1">
+            <i class="bi bi-calendar-event me-1"></i> Registered on {{ patient['created_at'][:10] if patient['created_at'] else 'N/A' }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Actions Toolbar -->
+      <div class="d-flex flex-wrap gap-2">
+        <!-- Edit Button -->
+        <a href="{{ url_for('patients.edit', patient_id=patient['Patient_id']) }}" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1 shadow-sm">
+          <i class="bi bi-pencil"></i>
+          <span>Edit Details</span>
+        </a>
+
+        <!-- Deactivate / Reactivate Status Form -->
+        <form method="POST" action="{{ url_for('patients.toggle_status', patient_id=patient['Patient_id']) }}" class="m-0">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-sm {% if patient['is_active'] == 1 %}btn-outline-warning{% else %}btn-outline-success{% endif %} d-inline-flex align-items-center gap-1 shadow-sm">
+            <i class="bi {% if patient['is_active'] == 1 %}bi-slash-circle{% else %}bi-check-circle{% endif %}"></i>
+            <span>{{ 'Deactivate' if patient['is_active'] == 1 else 'Reactivate' }}</span>
+          </button>
+        </form>
+
+        <!-- Delete Trigger Modal Button -->
+        <button type="button" class="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#deletePatientModal">
+          <i class="bi bi-trash"></i>
+          <span>Delete</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Demographics Row -->
+    <div class="row g-3 mt-3 pt-3 border-top">
+      <div class="col-6 col-md-3">
+        <span class="d-block text-muted small">Age</span>
+        <span class="fw-semibold text-dark fs-6">{{ patient['P_Age'] }} Years</span>
+      </div>
+      <div class="col-6 col-md-3">
+        <span class="d-block text-muted small">Gender</span>
+        <span class="fw-semibold text-dark fs-6">{{ patient['P_Gender'] }}</span>
+      </div>
+      <div class="col-6 col-md-3">
+        <span class="d-block text-muted small">Blood Group</span>
+        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 fs-6">
+          <i class="bi bi-droplet-fill me-1"></i>{{ patient['Blood_Group'] }}
+        </span>
+      </div>
+      <div class="col-6 col-md-3">
+        <span class="d-block text-muted small">Cumulative Billing</span>
+        <span class="fw-bold text-success fs-6">${{ "%.2f"|format(total_billed) }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Relational Records Section -->
+  <div class="row g-4 mb-4">
+    <!-- 1. Patient Appointment History -->
+    <div class="col-12 col-xl-7">
+      <div class="card-table h-100">
+        <div class="card-table-header">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-calendar-check text-secondary"></i>
+            <h3 class="h6 mb-0 fw-semibold">Appointment History ({{ appointments|length }})</h3>
+          </div>
+          {% if 'appointments.create' in current_app.view_functions %}
+            <a href="{{ url_for('appointments.create', patient_id=patient['Patient_id']) }}" class="btn btn-sm btn-outline-primary py-0">
+              + New Appointment
+            </a>
+          {% endif %}
+        </div>
+
+        {% if appointments %}
+          <div class="table-responsive">
+            <table class="table table-custom align-middle">
+              <thead>
+                <tr>
+                  <th>Schedule</th>
+                  <th>Assigned Doctor</th>
+                  <th>Reason</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for appt in appointments %}
+                  <tr>
+                    <td>
+                      <div class="fw-semibold text-dark">{{ appt['A_Date'] }}</div>
+                      <small class="text-muted">{{ appt['A_Time'] }} ({{ appt['Duration_Min'] }}m)</small>
+                    </td>
+                    <td>
+                      <div class="fw-medium text-dark">{{ appt['Doctor_Name'] }}</div>
+                      <small class="text-muted">{{ appt['D_Qualification'] }}</small>
+                    </td>
+                    <td>
+                      <span class="text-truncate d-inline-block" style="max-width: 150px;" title="{{ appt['Reason'] }}">
+                        {{ appt['Reason'] }}
+                      </span>
+                    </td>
+                    <td>
+                      {% if appt['Status'] == 'Scheduled' %}
+                        <span class="badge badge-status badge-scheduled">Scheduled</span>
+                      {% elif appt['Status'] == 'Completed' %}
+                        <span class="badge badge-status badge-completed">Completed</span>
+                      {% else %}
+                        <span class="badge badge-status badge-cancelled">Cancelled</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state py-4">
+            <div class="empty-state-icon" style="font-size: 2rem;">
+              <i class="bi bi-calendar-x"></i>
+            </div>
+            <p class="small text-muted mb-0">No past or scheduled appointments found for this patient.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 2. Patient Billing History -->
+    <div class="col-12 col-xl-5">
+      <div class="card-table h-100">
+        <div class="card-table-header">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-receipt text-secondary"></i>
+            <h3 class="h6 mb-0 fw-semibold">Billing Records ({{ bills|length }})</h3>
+          </div>
+          {% if 'billing.create' in current_app.view_functions %}
+            <a href="{{ url_for('billing.create', patient_id=patient['Patient_id']) }}" class="btn btn-sm btn-outline-success py-0">
+              + New Bill
+            </a>
+          {% endif %}
+        </div>
+
+        {% if bills %}
+          <div class="table-responsive">
+            <table class="table table-custom align-middle">
+              <thead>
+                <tr>
+                  <th>Bill #</th>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th>Payment</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for bill in bills %}
+                  <tr>
+                    <td>
+                      {% if 'billing.detail' in current_app.view_functions %}
+                        <a href="{{ url_for('billing.detail', bill_id=bill['Bill_ID']) }}" class="fw-semibold text-teal text-decoration-none">
+                          #{{ bill['Bill_ID'] }}
+                        </a>
+                      {% else %}
+                        <span class="fw-semibold text-dark">#{{ bill['Bill_ID'] }}</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <small class="text-muted">{{ bill['B_Date'] }}</small>
+                    </td>
+                    <td>
+                      <span class="fw-bold text-success">${{ "%.2f"|format(bill['B_Amount']) }}</span>
+                    </td>
+                    <td>
+                      <span class="badge bg-light text-dark border small">
+                        {{ bill['Pay_Mode'] }}
+                      </span>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+              <tfoot>
+                <tr class="bg-light">
+                  <td colspan="2" class="fw-bold text-dark text-end">Total Billed:</td>
+                  <td colspan="2" class="fw-bold text-success fs-6">${{ "%.2f"|format(total_billed) }}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state py-4">
+            <div class="empty-state-icon" style="font-size: 2rem;">
+              <i class="bi bi-receipt"></i>
+            </div>
+            <p class="small text-muted mb-0">No billing invoices have been generated for this patient.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Safe Delete Confirmation Modal -->
+<div class="modal fade" id="deletePatientModal" tabindex="-1" aria-labelledby="deletePatientModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold text-danger" id="deletePatientModalLabel">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>Delete Patient Record
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to permanently delete patient <strong>{{ patient['P_Name'] }}</strong> (ID: #{{ patient['Patient_id'] }})?</p>
+        <div class="alert alert-warning small mb-0">
+          <i class="bi bi-shield-exclamation me-1"></i>
+          <strong>Integrity Protection:</strong> If this patient has historical appointments or bills, the system will block deletion to preserve medical audit records. You can deactivate the patient instead.
+        </div>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
+        <form method="POST" action="{{ url_for('patients.delete', patient_id=patient['Patient_id']) }}" class="m-0">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-danger" id="btn-confirm-delete-patient">
+            Confirm Delete
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

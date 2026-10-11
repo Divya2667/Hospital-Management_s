@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Invoice #{{ bill['Bill_ID'] }} - Hospital Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0" style="max-width: 800px;">
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}" class="text-teal text-decoration-none">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('billing.index') }}" class="text-teal text-decoration-none">Billing</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('billing.detail', bill_id=bill['Bill_ID']) }}" class="text-teal text-decoration-none">Invoice #{{ bill['Bill_ID'] }}</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Edit</li>
+    </ol>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="mb-4">
+    <h1 class="h3 fw-bold text-dark mb-1">Edit Invoice #{{ bill['Bill_ID'] }}</h1>
+    <p class="text-muted small mb-0">Modify billing information, adjusted amounts, or payment mode settlement.</p>
+  </div>
+
+  <!-- Edit Form Card -->
+  <div class="card card-custom p-4 shadow-sm border-0">
+    <form method="POST" action="{{ url_for('billing.edit', bill_id=bill['Bill_ID']) }}" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <!-- Patient Selection -->
+      <div class="mb-3">
+        <label for="patient_id" class="form-label fw-semibold text-dark">
+          Patient <span class="text-danger">*</span>
+        </label>
+        <select class="form-select form-select-lg" id="patient_id" name="patient_id" required>
+          {% for p in patients %}
+            <option value="{{ p['Patient_id'] }}" 
+                    {% if form_data.patient_id|string == p['Patient_id']|string %}selected{% endif %}>
+              {{ p['P_Name'] }} (ID: #{{ p['Patient_id'] }}{% if p['P_Age'] %}, {{ p['P_Gender'] }}, {{ p['P_Age'] }} yrs{% endif %})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <!-- Invoice Date -->
+        <div class="col-12 col-md-6">
+          <label for="b_date" class="form-label fw-semibold text-dark">
+            Bill Date <span class="text-danger">*</span>
+          </label>
+          <div class="input-group">
+            <span class="input-group-text bg-white text-muted"><i class="bi bi-calendar-event"></i></span>
+            <input type="date" class="form-control" id="b_date" name="b_date" 
+                   value="{{ form_data.b_date }}" required>
+          </div>
+        </div>
+
+        <!-- Bill Amount -->
+        <div class="col-12 col-md-6">
+          <label for="b_amount" class="form-label fw-semibold text-dark">
+            Amount ($) <span class="text-danger">*</span>
+          </label>
+          <div class="input-group">
+            <span class="input-group-text bg-white text-dark fw-bold">$</span>
+            <input type="number" step="0.01" min="0.01" class="form-control" id="b_amount" name="b_amount" 
+                   placeholder="0.00" value="{{ form_data.b_amount }}" required>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Mode -->
+      <div class="mb-4">
+        <label class="form-label fw-semibold text-dark mb-2">
+          Payment Mode <span class="text-danger">*</span>
+        </label>
+        <div class="row g-2">
+          {% for mode in allowed_modes %}
+            <div class="col-6 col-sm-4 col-md-2dot4">
+              <label class="payment-mode-card d-flex flex-column align-items-center justify-content-center p-3 rounded border text-center cursor-pointer h-100 {% if form_data.pay_mode == mode %}border-teal bg-light-teal-subtle text-teal fw-semibold{% else %}bg-white text-secondary{% endif %}" style="cursor: pointer; transition: all 0.15s ease;">
+                <input type="radio" name="pay_mode" value="{{ mode }}" class="d-none" 
+                       {% if form_data.pay_mode == mode %}checked{% endif %}
+                       onchange="document.querySelectorAll('.payment-mode-card').forEach(c => c.classList.remove('border-teal', 'bg-light-teal-subtle', 'text-teal', 'fw-semibold')); this.closest('label').classList.add('border-teal', 'bg-light-teal-subtle', 'text-teal', 'fw-semibold');">
+                <i class="bi {% if mode == 'Cash' %}bi-cash-coin{% elif mode == 'Card' %}bi-credit-card-2-front{% elif mode == 'UPI' %}bi-qr-code{% elif mode == 'Insurance' %}bi-shield-check{% else %}bi-bank{% endif %} fs-4 mb-1"></i>
+                <span class="small">{{ mode }}</span>
+              </label>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+        <a href="{{ url_for('billing.detail', bill_id=bill['Bill_ID']) }}" class="btn btn-outline-secondary px-4">
+          Cancel
+        </a>
+        <button type="submit" class="btn btn-primary-custom px-4 shadow-sm">
+          <i class="bi bi-check2-circle me-1"></i> Update Invoice
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

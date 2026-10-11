@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}Billing & Invoices - Hospital Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <!-- Page Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+    <div>
+      <h1 class="h3 fw-bold text-dark mb-1">Billing & Financial Records</h1>
+      <p class="text-muted small mb-0">
+        Monitor patient invoices, process payments, and track hospital financial transactions.
+      </p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('billing.create') }}" class="btn btn-primary-custom d-flex align-items-center gap-2 shadow-sm" id="btn-create-bill">
+        <i class="bi bi-plus-circle"></i>
+        <span>Create Invoice</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Financial Aggregate KPI Cards -->
+  <div class="row g-3 mb-4">
+    <!-- Total Revenue -->
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card card-custom h-100 p-3 border-0 shadow-sm" style="border-left: 4px solid #16A34A !important;">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.05em;">Total Revenue</span>
+            <h3 class="h4 fw-bold text-success mt-1 mb-0">${{ "%.2f"|format(total_revenue) }}</h3>
+            <small class="text-muted" style="font-size: 0.75rem;">Lifetime: ${{ "%.2f"|format(lifetime_revenue) }}</small>
+          </div>
+          <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 46px; height: 46px; background-color: #DCFCE7; color: #16A34A;">
+            <i class="bi bi-cash-stack fs-5"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Invoices -->
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card card-custom h-100 p-3 border-0 shadow-sm" style="border-left: 4px solid var(--primary-teal) !important;">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.05em;">Invoices Issued</span>
+            <h3 class="h4 fw-bold text-dark mt-1 mb-0">{{ total_invoices }}</h3>
+            <small class="text-muted" style="font-size: 0.75rem;">Total in Database: {{ lifetime_count }}</small>
+          </div>
+          <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 46px; height: 46px; background-color: var(--light-teal); color: var(--primary-teal);">
+            <i class="bi bi-receipt fs-5"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Average Invoice Amount -->
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card card-custom h-100 p-3 border-0 shadow-sm" style="border-left: 4px solid #2563EB !important;">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.05em;">Average Invoice</span>
+            <h3 class="h4 fw-bold text-dark mt-1 mb-0">${{ "%.2f"|format(avg_invoice) }}</h3>
+            <small class="text-muted" style="font-size: 0.75rem;">Per transaction</small>
+          </div>
+          <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 46px; height: 46px; background-color: #DBEAFE; color: #2563EB;">
+            <i class="bi bi-graph-up-arrow fs-5"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Modes Mini Summary -->
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card card-custom h-100 p-3 border-0 shadow-sm" style="border-left: 4px solid #7C3AED !important;">
+        <div>
+          <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.05em;">Settlement Mix</span>
+          <div class="d-flex flex-wrap gap-1 mt-2">
+            {% for mode in allowed_modes %}
+              {% set m_stat = mode_breakdown.get(mode, {'count': 0, 'amount': 0.0}) %}
+              <span class="badge border py-1 px-2" style="font-size: 0.7rem; background-color: #F8FAFC; color: #334155;" title="{{ mode }}: ${{ '%.2f'|format(m_stat.amount) }}">
+                {{ mode }}: <strong>{{ m_stat.count }}</strong>
+              </span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search & Multi-Criteria Filter Bar -->
+  <div class="card card-custom p-3 mb-4 shadow-sm">
+    <form method="GET" action="{{ url_for('billing.index') }}" class="row g-2 align-items-end">
+      <!-- Search Input -->
+      <div class="col-12 col-md-4 col-xl-3">
+        <label for="filter-q" class="form-label small fw-semibold text-muted mb-1">Search Patient / Bill #</label>
+        <div class="input-group">
+          <span class="input-group-text bg-white text-muted border-end-0"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control border-start-0" id="filter-q" name="q" placeholder="Name, Phone, or #ID" value="{{ search_query }}">
+        </div>
+      </div>
+
+      <!-- Payment Mode Filter -->
+      <div class="col-12 col-sm-6 col-md-3 col-xl-2">
+        <label for="filter-pay-mode" class="form-label small fw-semibold text-muted mb-1">Payment Mode</label>
+        <select class="form-select" id="filter-pay-mode" name="pay_mode">
+          <option value="">All Modes</option>
+          {% for mode in allowed_modes %}
+            <option value="{{ mode }}" {% if current_pay_mode == mode %}selected{% endif %}>{{ mode }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Date Range: From -->
+      <div class="col-12 col-sm-6 col-md-2 col-xl-2">
+        <label for="filter-date-from" class="form-label small fw-semibold text-muted mb-1">From Date</label>
+        <input type="date" class="form-control" id="filter-date-from" name="date_from" value="{{ current_date_from }}">
+      </div>
+
+      <!-- Date Range: To -->
+      <div class="col-12 col-sm-6 col-md-2 col-xl-2">
+        <label for="filter-date-to" class="form-label small fw-semibold text-muted mb-1">To Date</label>
+        <input type="date" class="form-control" id="filter-date-to" name="date_to" value="{{ current_date_to }}">
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="col-12 col-sm-6 col-md-1 col-xl-3 d-flex gap-2">
+        <button type="submit" class="btn btn-outline-teal px-3" title="Apply Filters">
+          <i class="bi bi-funnel me-1"></i>Filter
+        </button>
+        {% if search_query or current_pay_mode or current_date_from or current_date_to %}
+          <a href="{{ url_for('billing.index') }}" class="btn btn-outline-secondary px-3" title="Clear Filters">
+            <i class="bi bi-arrow-counterclockwise"></i>
+          </a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Invoices Data Table -->
+  <div class="card card-table shadow-sm">
+    <div class="card-table-header d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-credit-card-2-front text-secondary"></i>
+        <h2 class="h6 mb-0 fw-semibold">Invoices & Receipts ({{ bills|length }})</h2>
+      </div>
+      <span class="badge bg-light text-muted border">Filtered Total: ${{ "%.2f"|format(total_revenue) }}</span>
+    </div>
+
+    {% if bills %}
+      <div class="table-responsive">
+        <table class="table table-custom align-middle mb-0" id="billing-table">
+          <thead>
+            <tr>
+              <th scope="col" style="width: 100px;">Bill #</th>
+              <th scope="col" style="width: 120px;">Date</th>
+              <th scope="col">Patient</th>
+              <th scope="col" style="width: 130px;">Amount</th>
+              <th scope="col" style="width: 130px;">Payment Mode</th>
+              <th scope="col" class="text-end" style="width: 160px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for bill in bills %}
+              <tr>
+                <td>
+                  <a href="{{ url_for('billing.detail', bill_id=bill['Bill_ID']) }}" class="fw-bold text-decoration-none text-teal">
+                    #{{ bill['Bill_ID'] }}
+                  </a>
+                </td>
+                <td>
+                  <span class="text-dark small fw-medium">{{ bill['B_Date'] }}</span>
+                </td>
+                <td>
+                  <div class="fw-semibold text-dark">
+                    <a href="{{ url_for('patients.detail', patient_id=bill['Patient_id']) }}" class="text-dark text-decoration-none hover-teal">
+                      {{ bill['Patient_Name'] }}
+                    </a>
+                  </div>
+                  <small class="text-muted"><i class="bi bi-person me-1"></i>ID #{{ bill['Patient_id'] }} &bull; {{ bill['Patient_Gender'] }}, {{ bill['Patient_Age'] }} yrs ({{ bill['Patient_Blood_Group'] }})</small>
+                </td>
+                <td>
+                  <span class="fw-bold text-success fs-6">${{ "%.2f"|format(bill['B_Amount']) }}</span>
+                </td>
+                <td>
+                  {% if bill['Pay_Mode'] == 'Cash' %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                      <i class="bi bi-cash me-1"></i>Cash
+                    </span>
+                  {% elif bill['Pay_Mode'] == 'Card' %}
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">
+                      <i class="bi bi-credit-card me-1"></i>Card
+                    </span>
+                  {% elif bill['Pay_Mode'] == 'UPI' %}
+                    <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-2 py-1">
+                      <i class="bi bi-qr-code me-1"></i>UPI
+                    </span>
+                  {% elif bill['Pay_Mode'] == 'Insurance' %}
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1">
+                      <i class="bi bi-shield-check me-1"></i>Insurance
+                    </span>
+                  {% else %}
+                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1">
+                      <i class="bi bi-bank me-1"></i>Net Banking
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <div class="btn-group btn-group-sm">
+                    <a href="{{ url_for('billing.detail', bill_id=bill['Bill_ID']) }}" class="btn btn-outline-secondary" title="View / Print Receipt">
+                      <i class="bi bi-receipt"></i>
+                    </a>
+                    <a href="{{ url_for('billing.edit', bill_id=bill['Bill_ID']) }}" class="btn btn-outline-secondary" title="Edit Bill">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <button type="button" class="btn btn-outline-danger" title="Delete Bill" data-bs-toggle="modal" data-bs-target="#deleteModal{{ bill['Bill_ID'] }}">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+
+                  <!-- Delete Confirmation Modal -->
+                  <div class="modal fade" id="deleteModal{{ bill['Bill_ID'] }}" tabindex="-1" aria-labelledby="modalLabel{{ bill['Bill_ID'] }}" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                      <div class="modal-content text-start">
+                        <div class="modal-header">
+                          <h5 class="modal-title h6 fw-semibold text-danger" id="modalLabel{{ bill['Bill_ID'] }}">
+                            <i class="bi bi-exclamation-triangle me-1"></i>Confirm Invoice Deletion
+                          </h5>
+                          <button type="button" class="btn-close" data-bs-target="#deleteModal{{ bill['Bill_ID'] }}" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                          <p class="mb-2">Are you sure you want to permanently delete invoice <strong>#{{ bill['Bill_ID'] }}</strong>?</p>
+                          <div class="p-3 bg-light rounded border small mb-2">
+                            <div><strong>Patient:</strong> {{ bill['Patient_Name'] }}</div>
+                            <div><strong>Date:</strong> {{ bill['B_Date'] }}</div>
+                            <div><strong>Amount:</strong> ${{ "%.2f"|format(bill['B_Amount']) }}</div>
+                            <div><strong>Payment Mode:</strong> {{ bill['Pay_Mode'] }}</div>
+                          </div>
+                          <p class="small text-danger mb-0">This financial record will be removed from accounts.</p>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                          <form method="POST" action="{{ url_for('billing.delete', bill_id=bill['Bill_ID']) }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete Invoice</button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state py-5">
+        <div class="empty-state-icon text-muted mb-2" style="font-size: 2.5rem;">
+          <i class="bi bi-receipt-cutoff"></i>
+        </div>
+        <h3 class="h6 fw-semibold text-secondary mb-1">No Invoices Found</h3>
+        <p class="small text-muted mb-3" style="max-width: 420px; margin: 0 auto;">
+          {% if search_query or current_pay_mode or current_date_from or current_date_to %}
+            No billing records match your current search and filter criteria. Try adjusting or clearing your filters.
+          {% else %}
+            No invoices have been generated yet. Issue a new patient invoice to begin tracking financial records.
+          {% endif %}
+        </p>
+        {% if search_query or current_pay_mode or current_date_from or current_date_to %}
+          <a href="{{ url_for('billing.index') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-counterclockwise me-1"></i>Reset Filters
+          </a>
+        {% else %}
+          <a href="{{ url_for('billing.create') }}" class="btn btn-primary-custom btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>Create First Invoice
+          </a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

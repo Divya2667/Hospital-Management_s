@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Reschedule Appointment #{{ appointment['Appointment_ID'] }} - Hospital Management System{% endblock %}
+{% block page_title %}Reschedule / Edit Appointment{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0" style="max-width: 820px;">
+  <!-- Breadcrumb Back Link -->
+  <div class="mb-3">
+    <a href="{{ url_for('appointments.detail', appointment_id=appointment['Appointment_ID']) }}" class="text-secondary text-decoration-none small d-inline-flex align-items-center gap-1">
+      <i class="bi bi-arrow-left"></i>
+      <span>Back to Appointment Details</span>
+    </a>
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-3 overflow-hidden bg-white mb-4">
+    <div class="card-header bg-white py-3 px-4 border-bottom">
+      <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-2">
+          <div class="rounded p-2 text-white" style="background-color: var(--primary-teal);">
+            <i class="bi bi-clock-history"></i>
+          </div>
+          <div>
+            <h2 class="h5 fw-bold mb-0" style="color: var(--primary-teal);">Reschedule Appointment #{{ appointment['Appointment_ID'] }}</h2>
+            <small class="text-muted">Modify date, time, clinical reason, or reassign doctor</small>
+          </div>
+        </div>
+        <span class="badge {% if appointment['Status'] == 'Scheduled' %}badge-scheduled{% elif appointment['Status'] == 'Completed' %}badge-completed{% else %}badge-cancelled{% endif %} badge-status">
+          {{ appointment['Status'] }}
+        </span>
+      </div>
+    </div>
+
+    <div class="card-body p-4">
+      <form method="POST" action="{{ url_for('appointments.edit', appointment_id=appointment['Appointment_ID']) }}" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Patient Demographics Read-Only Info -->
+        <div class="mb-3 p-3 bg-light rounded border">
+          <label class="form-label text-muted small mb-1">Patient</label>
+          <div class="d-flex align-items-center gap-2">
+            <span class="fw-bold fs-6 text-dark">{{ patient['P_Name'] }}</span>
+            <span class="badge bg-secondary-subtle text-secondary">ID: #{{ patient['Patient_id'] }}</span>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <!-- Assign Doctor -->
+          <div class="col-12 col-md-6">
+            <label for="doctor_id" class="form-label">Doctor <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0 text-muted">
+                <i class="bi bi-heart-pulse"></i>
+              </span>
+              <select class="form-select border-start-0 ps-0" id="doctor_id" name="doctor_id" required>
+                {% set selected_doc = request.form.get('doctor_id', appointment['Doctor_ID']|string) %}
+                {% for doc in doctors %}
+                  <option value="{{ doc['Doctor_ID'] }}" {% if selected_doc == doc['Doctor_ID']|string %}selected{% endif %}>
+                    {{ doc['D_Name'] if doc['D_Name'].startswith('Dr.') else 'Dr. ' ~ doc['D_Name'] }} ({{ doc['D_Qualification'] }})
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div class="col-12 col-md-6">
+            <label for="status" class="form-label">Appointment Status</label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0 text-muted">
+                <i class="bi bi-flag"></i>
+              </span>
+              <select class="form-select border-start-0 ps-0" id="status" name="status">
+                {% set current_status = request.form.get('status', appointment['Status']) %}
+                {% for st in allowed_statuses %}
+                  <option value="{{ st }}" {% if current_status == st %}selected{% endif %}>
+                    {{ st }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <!-- Date -->
+          <div class="col-12 col-md-4">
+            <label for="date" class="form-label">Date <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0 text-muted">
+                <i class="bi bi-calendar-event"></i>
+              </span>
+              <input 
+                type="date" 
+                class="form-control border-start-0 ps-0" 
+                id="date" 
+                name="date" 
+                value="{{ request.form.get('date', appointment['A_Date']) }}"
+                required
+              >
+            </div>
+          </div>
+
+          <!-- Time -->
+          <div class="col-12 col-md-4">
+            <label for="time" class="form-label">Time <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0 text-muted">
+                <i class="bi bi-clock"></i>
+              </span>
+              <input 
+                type="time" 
+                class="form-control border-start-0 ps-0" 
+                id="time" 
+                name="time" 
+                min="{{ clinic_open }}" 
+                max="{{ clinic_close }}"
+                value="{{ request.form.get('time', appointment['A_Time']) }}"
+                required
+              >
+            </div>
+            <div class="form-text small">Clinic hours: {{ clinic_open }} - {{ clinic_close }}</div>
+          </div>
+
+          <!-- Duration -->
+          <div class="col-12 col-md-4">
+            <label for="duration" class="form-label">Duration (Minutes)</label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0 text-muted">
+                <i class="bi bi-hourglass-split"></i>
+              </span>
+              <input 
+                type="number" 
+                class="form-control border-start-0 ps-0" 
+                id="duration" 
+                name="duration" 
+                min="5" 
+                max="180" 
+                step="5"
+                value="{{ request.form.get('duration', appointment['Duration_Min']) }}"
+                required
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Reason -->
+        <div class="mb-4">
+          <label for="reason" class="form-label">Clinical Reason <span class="text-danger">*</span></label>
+          <textarea 
+            class="form-control" 
+            id="reason" 
+            name="reason" 
+            rows="3" 
+            required
+          >{{ request.form.get('reason', appointment['Reason']) }}</textarea>
+        </div>
+
+        <div class="border-top pt-3 d-flex justify-content-end gap-2">
+          <a href="{{ url_for('appointments.detail', appointment_id=appointment['Appointment_ID']) }}" class="btn btn-light border px-4">Cancel</a>
+          <button type="submit" class="btn text-white px-4" style="background-color: var(--primary-teal);" id="btn-update-appointment">
+            <i class="bi bi-check2-circle me-1"></i> Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Add Doctor - Hospital Management System{% endblock %}
+{% block page_title %}Doctor Registration{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0" style="max-width: 780px;">
+  <!-- Breadcrumb Back Link -->
+  <div class="mb-3">
+    <a href="{{ url_for('doctors.index') }}" class="text-secondary text-decoration-none small d-inline-flex align-items-center gap-1">
+      <i class="bi bi-arrow-left"></i>
+      <span>Back to Doctors Registry</span>
+    </a>
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-3 overflow-hidden bg-white">
+    <div class="card-header bg-white py-3 px-4 border-bottom">
+      <div class="d-flex align-items-center gap-2">
+        <div class="rounded p-2 text-white" style="background-color: var(--primary-teal);">
+          <i class="bi bi-heart-pulse-fill"></i>
+        </div>
+        <div>
+          <h2 class="h5 fw-bold mb-0" style="color: var(--primary-teal);">Add Medical Specialist</h2>
+          <small class="text-muted">Register credentials, clinical experience, and contact information</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-body p-4">
+      <form method="POST" action="{{ url_for('doctors.create') }}" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Full Name -->
+        <div class="mb-3">
+          <label for="name" class="form-label">Doctor Full Name <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0 text-muted">
+              <i class="bi bi-person-badge"></i>
+            </span>
+            <input 
+              type="text" 
+              class="form-control border-start-0 ps-0" 
+              id="name" 
+              name="name" 
+              placeholder="e.g. Dr. Meredith Grey" 
+              value="{{ request.form.get('name', '') }}"
+              required 
+              autofocus
+            >
+          </div>
+          <div class="form-text small">Full professional name including honorifics.</div>
+        </div>
+
+        <!-- Qualification / Specialty -->
+        <div class="mb-3">
+          <label for="qualification" class="form-label">Qualification / Specialty <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0 text-muted">
+              <i class="bi bi-mortarboard"></i>
+            </span>
+            <input 
+              type="text" 
+              class="form-control border-start-0 ps-0" 
+              id="qualification" 
+              name="qualification" 
+              placeholder="e.g. MD General Surgery, FACS" 
+              value="{{ request.form.get('qualification', '') }}"
+              required
+            >
+          </div>
+          <div class="form-text small">Degrees, medical certifications, and department specialty.</div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <!-- Experience (Years) -->
+          <div class="col-12 col-md-6">
+            <label for="experience" class="form-label">Experience (Years) <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0 text-muted">
+                <i class="bi bi-award"></i>
+              </span>
+              <input 
+                type="number" 
+                class="form-control border-start-0 ps-0" 
+                id="experience" 
+                name="experience" 
+                min="0" 
+                max="75" 
+                placeholder="e.g. 10" 
+                value="{{ request.form.get('experience', '') }}"
+                required
+              >
+            </div>
+            <div class="form-text small">Total years in medical practice (0 or greater).</div>
+          </div>
+
+          <!-- Contact Phone -->
+          <div class="col-12 col-md-6">
+            <label for="phone" class="form-label">Contact Phone Number <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0 text-muted">
+                <i class="bi bi-telephone"></i>
+              </span>
+              <input 
+                type="tel" 
+                class="form-control border-start-0 ps-0" 
+                id="phone" 
+                name="phone" 
+                placeholder="e.g. +1-555-839-2019" 
+                value="{{ request.form.get('phone', '') }}"
+                required
+              >
+            </div>
+            <div class="form-text small">Official direct clinic contact number.</div>
+          </div>
+        </div>
+
+        <div class="border-top pt-3 mt-4 d-flex justify-content-end gap-2">
+          <a href="{{ url_for('doctors.index') }}" class="btn btn-light border px-4">Cancel</a>
+          <button type="submit" class="btn text-white px-4" style="background-color: var(--primary-teal);" id="btn-save-doctor">
+            <i class="bi bi-check-circle me-1"></i> Save Doctor Record
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

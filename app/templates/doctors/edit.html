@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Doctor #{{ doctor['Doctor_ID'] }} - Hospital Management System{% endblock %}
+{% block page_title %}Edit Doctor Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0" style="max-width: 780px;">
+  <!-- Breadcrumb Back Link -->
+  <div class="mb-3">
+    <a href="{{ url_for('doctors.detail', doctor_id=doctor['Doctor_ID']) }}" class="text-secondary text-decoration-none small d-inline-flex align-items-center gap-1">
+      <i class="bi bi-arrow-left"></i>
+      <span>Back to Doctor Profile</span>
+    </a>
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-3 overflow-hidden bg-white">
+    <div class="card-header bg-white py-3 px-4 border-bottom">
+      <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-2">
+          <div class="rounded p-2 text-white" style="background-color: var(--primary-teal);">
+            <i class="bi bi-pencil-square"></i>
+          </div>
+          <div>
+            <h2 class="h5 fw-bold mb-0" style="color: var(--primary-teal);">Edit Doctor #{{ doctor['Doctor_ID'] }}</h2>
+            <small class="text-muted">Update clinical qualifications and credentials</small>
+          </div>
+        </div>
+        <span class="badge {% if doctor['is_active'] == 1 %}badge-completed{% else %}badge-cancelled{% endif %} badge-status">
+          {{ 'On-Duty' if doctor['is_active'] == 1 else 'Off-Duty' }}
+        </span>
+      </div>
+    </div>
+
+    <div class="card-body p-4">
+      <form method="POST" action="{{ url_for('doctors.edit', doctor_id=doctor['Doctor_ID']) }}" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Full Name -->
+        <div class="mb-3">
+          <label for="name" class="form-label">Doctor Full Name <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0 text-muted">
+              <i class="bi bi-person-badge"></i>
+            </span>
+            <input 
+              type="text" 
+              class="form-control border-start-0 ps-0" 
+              id="name" 
+              name="name" 
+              value="{{ request.form.get('name', doctor['D_Name']) }}"
+              required 
+              autofocus
+            >
+          </div>
+        </div>
+
+        <!-- Qualification / Specialty -->
+        <div class="mb-3">
+          <label for="qualification" class="form-label">Qualification / Specialty <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0 text-muted">
+              <i class="bi bi-mortarboard"></i>
+            </span>
+            <input 
+              type="text" 
+              class="form-control border-start-0 ps-0" 
+              id="qualification" 
+              name="qualification" 
+              value="{{ request.form.get('qualification', doctor['D_Qualification']) }}"
+              required
+            >
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <!-- Experience (Years) -->
+          <div class="col-12 col-md-6">
+            <label for="experience" class="form-label">Experience (Years) <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0 text-muted">
+                <i class="bi bi-award"></i>
+              </span>
+              <input 
+                type="number" 
+                class="form-control border-start-0 ps-0" 
+                id="experience" 
+                name="experience" 
+                min="0" 
+                max="75" 
+                value="{{ request.form.get('experience', doctor['Experience']) }}"
+                required
+              >
+            </div>
+          </div>
+
+          <!-- Contact Phone -->
+          <div class="col-12 col-md-6">
+            <label for="phone" class="form-label">Contact Phone Number <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0 text-muted">
+                <i class="bi bi-telephone"></i>
+              </span>
+              <input 
+                type="tel" 
+                class="form-control border-start-0 ps-0" 
+                id="phone" 
+                name="phone" 
+                value="{{ request.form.get('phone', doctor['D_Phone']) }}"
+                required
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="border-top pt-3 mt-4 d-flex justify-content-end gap-2">
+          <a href="{{ url_for('doctors.detail', doctor_id=doctor['Doctor_ID']) }}" class="btn btn-light border px-4">Cancel</a>
+          <button type="submit" class="btn text-white px-4" style="background-color: var(--primary-teal);" id="btn-update-doctor">
+            <i class="bi bi-check2-circle me-1"></i> Update Doctor
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

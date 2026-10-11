@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}Invoice #{{ bill['Bill_ID'] }} - Hospital Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0" style="max-width: 900px;">
+  <!-- Breadcrumbs & Non-Print Action Toolbar -->
+  <div class="d-print-none mb-4">
+    <nav aria-label="breadcrumb" class="mb-3">
+      <ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}" class="text-teal text-decoration-none">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('billing.index') }}" class="text-teal text-decoration-none">Billing</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Invoice #{{ bill['Bill_ID'] }}</li>
+      </ol>
+    </nav>
+
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
+      <div>
+        <h1 class="h3 fw-bold text-dark mb-0">Invoice #{{ bill['Bill_ID'] }}</h1>
+        <small class="text-muted">Issued on {{ bill['B_Date'] }} for {{ bill['Patient_Name'] }}</small>
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('billing.index') }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+          <i class="bi bi-arrow-left"></i>
+          <span>Back to Invoices</span>
+        </a>
+        <a href="{{ url_for('billing.edit', bill_id=bill['Bill_ID']) }}" class="btn btn-outline-teal btn-sm d-flex align-items-center gap-1">
+          <i class="bi bi-pencil"></i>
+          <span>Edit</span>
+        </a>
+        <button type="button" class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#deleteBillModal">
+          <i class="bi bi-trash"></i>
+          <span>Delete</span>
+        </button>
+        <button type="button" class="btn btn-primary-custom btn-sm d-flex align-items-center gap-1 shadow-sm" onclick="window.print();" id="btn-print-invoice">
+          <i class="bi bi-printer"></i>
+          <span>Print Receipt</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Modal (Non-Print) -->
+  <div class="modal fade d-print-none" id="deleteBillModal" tabindex="-1" aria-labelledby="deleteBillModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content text-start">
+        <div class="modal-header">
+          <h5 class="modal-title h6 fw-semibold text-danger" id="deleteBillModalLabel">
+            <i class="bi bi-exclamation-triangle me-1"></i>Delete Invoice #{{ bill['Bill_ID'] }}
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-2">Are you sure you want to permanently delete this billing record?</p>
+          <div class="p-3 bg-light rounded border small">
+            <div><strong>Patient:</strong> {{ bill['Patient_Name'] }}</div>
+            <div><strong>Amount:</strong> ${{ "%.2f"|format(bill['B_Amount']) }}</div>
+            <div><strong>Payment Mode:</strong> {{ bill['Pay_Mode'] }}</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <form method="POST" action="{{ url_for('billing.delete', bill_id=bill['Bill_ID']) }}" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-danger btn-sm">Confirm Delete</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Printable Invoice Document Sheet -->
+  <div class="card card-custom invoice-card p-4 p-md-5 shadow-sm border mb-4 bg-white" id="invoice-sheet">
+    <!-- Invoice Header -->
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start pb-4 border-bottom gap-3">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <div class="brand-badge" style="width: 36px; height: 36px; background: linear-gradient(135deg, var(--dark-teal), var(--primary-teal)); color: #fff; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center;">
+            <i class="bi bi-hospital fs-5"></i>
+          </div>
+          <div>
+            <h2 class="h5 fw-bold text-dark mb-0">City General Hospital</h2>
+            <small class="text-teal fw-semibold">Centre for Clinical Excellence</small>
+          </div>
+        </div>
+        <div class="small text-muted">
+          100 Medical Boulevard, Healthcare District<br>
+          Phone: +1 (555) 019-2834 &bull; Email: billing@hospital.local<br>
+          Hospital Reg. ID: MED-TX-882194
+        </div>
+      </div>
+
+      <div class="text-sm-end">
+        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fw-bold text-uppercase fs-7 mb-2 d-inline-block">
+          <i class="bi bi-check-circle-fill me-1"></i> PAID &bull; SETTLED
+        </span>
+        <div class="h5 fw-bold text-dark mb-1">INVOICE #{{ "%05d"|format(bill['Bill_ID']) }}</div>
+        <div class="small text-muted"><strong>Date Issued:</strong> {{ bill['B_Date'] }}</div>
+        <div class="small text-muted"><strong>Settlement:</strong> {{ bill['Pay_Mode'] }}</div>
+      </div>
+    </div>
+
+    <!-- Patient Details & Billing Meta -->
+    <div class="row g-4 my-3">
+      <div class="col-12 col-md-7">
+        <div class="p-3 rounded bg-light border h-100">
+          <span class="text-uppercase fw-bold text-muted small" style="font-size: 0.72rem; letter-spacing: 0.05em;">Billed To (Patient)</span>
+          <h3 class="h6 fw-bold text-dark mt-1 mb-2">
+            <a href="{{ url_for('patients.detail', patient_id=bill['Patient_id']) }}" class="text-dark text-decoration-none d-print-none">
+              {{ bill['Patient_Name'] }}
+            </a>
+            <span class="d-none d-print-inline">{{ bill['Patient_Name'] }}</span>
+          </h3>
+          <div class="small text-muted lh-sm">
+            <div><strong>Patient ID:</strong> #{{ bill['Patient_id'] }}</div>
+            <div><strong>Demographics:</strong> {{ bill['Patient_Age'] }} yrs &bull; {{ bill['Patient_Gender'] }}</div>
+            <div><strong>Blood Group:</strong> {{ bill['Patient_Blood_Group'] }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-5">
+        <div class="p-3 rounded bg-light border h-100">
+          <span class="text-uppercase fw-bold text-muted small" style="font-size: 0.72rem; letter-spacing: 0.05em;">Payment Breakdown</span>
+          <div class="mt-2 small">
+            <div class="d-flex justify-content-between py-1 border-bottom">
+              <span class="text-muted">Payment Channel:</span>
+              <span class="fw-semibold text-dark">{{ bill['Pay_Mode'] }}</span>
+            </div>
+            <div class="d-flex justify-content-between py-1 border-bottom">
+              <span class="text-muted">Transaction Date:</span>
+              <span class="fw-semibold text-dark">{{ bill['B_Date'] }}</span>
+            </div>
+            <div class="d-flex justify-content-between py-1 border-bottom">
+              <span class="text-muted">Payment Status:</span>
+              <span class="fw-semibold text-success">Completed</span>
+            </div>
+            <div class="d-flex justify-content-between py-1 pt-2">
+              <span class="fw-bold text-dark">Amount Settled:</span>
+              <span class="fw-bold text-success">${{ "%.2f"|format(bill['B_Amount']) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Itemized Services Table -->
+    <div class="table-responsive my-3">
+      <table class="table table-bordered align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th scope="col" style="width: 50px;" class="text-center">#</th>
+            <th scope="col">Description of Medical Services</th>
+            <th scope="col" style="width: 140px;" class="text-center">Service Date</th>
+            <th scope="col" style="width: 130px;" class="text-center">Qty / Rate</th>
+            <th scope="col" style="width: 140px;" class="text-end">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-center text-muted">1</td>
+            <td>
+              <div class="fw-semibold text-dark">Outpatient Consultation & Healthcare Services</div>
+              <small class="text-muted">Clinical evaluation, diagnostic review, and professional hospital care.</small>
+            </td>
+            <td class="text-center text-muted small">{{ bill['B_Date'] }}</td>
+            <td class="text-center text-muted small">1 &times; ${{ "%.2f"|format(bill['B_Amount']) }}</td>
+            <td class="text-end fw-bold text-dark">${{ "%.2f"|format(bill['B_Amount']) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Totals Summary Grid -->
+    <div class="row justify-content-end mb-4">
+      <div class="col-12 col-sm-6 col-md-5">
+        <table class="table table-sm table-borderless mb-0">
+          <tbody>
+            <tr>
+              <td class="text-muted">Subtotal:</td>
+              <td class="text-end fw-semibold text-dark">${{ "%.2f"|format(bill['B_Amount']) }}</td>
+            </tr>
+            <tr>
+              <td class="text-muted">Taxes & Hospital Surcharge (0%):</td>
+              <td class="text-end text-muted">$0.00</td>
+            </tr>
+            <tr class="border-top">
+              <td class="fw-bold text-dark fs-6 pt-2">Grand Total:</td>
+              <td class="text-end fw-bold text-dark fs-6 pt-2">${{ "%.2f"|format(bill['B_Amount']) }}</td>
+            </tr>
+            <tr>
+              <td class="fw-semibold text-success">Total Paid ({{ bill['Pay_Mode'] }}):</td>
+              <td class="text-end fw-bold text-success">${{ "%.2f"|format(bill['B_Amount']) }}</td>
+            </tr>
+            <tr class="border-top">
+              <td class="fw-bold text-muted small">Balance Due:</td>
+              <td class="text-end fw-bold text-dark small">$0.00</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Official Stamp & Signatory Section -->
+    <div class="row pt-4 mt-2 border-top align-items-end">
+      <div class="col-7">
+        <div class="small text-muted lh-sm">
+          <strong>Notice:</strong> This document serves as an official electronic receipt for services rendered at City General Hospital. All transactions are logged securely.
+        </div>
+      </div>
+      <div class="col-5 text-end">
+        <div class="d-inline-block text-center" style="width: 180px;">
+          <div class="border-bottom border-dark pb-3 mb-1" style="height: 40px;">
+            <span class="fst-italic text-teal fw-semibold" style="font-family: serif;">City Health Accounts</span>
+          </div>
+          <span class="small text-muted fw-semibold" style="font-size: 0.75rem;">Authorized Accounts Officer</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clinical Context: Patient's Linked Recent Appointments (Non-Print) -->
+  {% if appointments %}
+    <div class="card card-table shadow-sm border d-print-none mb-4">
+      <div class="card-table-header d-flex align-items-center gap-2">
+        <i class="bi bi-calendar-event text-secondary"></i>
+        <h3 class="h6 mb-0 fw-semibold">Patient's Recent Appointments ({{ appointments|length }})</h3>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-custom align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Date & Time</th>
+              <th>Doctor</th>
+              <th>Reason</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for appt in appointments %}
+              <tr>
+                <td>
+                  <span class="fw-semibold text-dark">{{ appt['A_Date'] }}</span>
+                  <br><small class="text-muted">{{ appt['A_Time'] }}</small>
+                </td>
+                <td>
+                  <div class="fw-medium text-dark">{{ appt['Doctor_Name'] }}</div>
+                  <small class="text-muted">{{ appt['D_Qualification'] }}</small>
+                </td>
+                <td><small class="text-muted">{{ appt['Reason'] }}</small></td>
+                <td>
+                  {% if appt['Status'] == 'Scheduled' %}
+                    <span class="badge badge-status badge-scheduled">Scheduled</span>
+                  {% elif appt['Status'] == 'Completed' %}
+                    <span class="badge badge-status badge-completed">Completed</span>
+                  {% else %}
+                    <span class="badge badge-status badge-cancelled">Cancelled</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

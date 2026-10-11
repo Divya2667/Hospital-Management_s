@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Staff Portal Login - Hospital Management System</title>
+  
+  <!-- Modern Google Fonts: Plus Jakarta Sans & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Custom Design System Styles with cache buster -->
+  <link href="{{ url_for('static', filename='css/style.css') }}?v=2.6" rel="stylesheet">
+
+  <style>
+    /* Guaranteed Centering & Responsive 2-Column Grid */
+    .auth-wrapper {
+      min-height: 100vh;
+      width: 100%;
+      max-width: 100vw;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 2.5rem 1.5rem !important;
+      position: relative;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+    .auth-container {
+      width: 100% !important;
+      max-width: 1040px !important;
+      margin: 0 auto !important;
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      position: relative;
+      z-index: 1;
+    }
+    .auth-card {
+      width: 100% !important;
+      max-width: 1040px !important;
+      margin: 0 auto !important;
+      border-radius: 1.5rem !important;
+      overflow: hidden !important;
+      box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(13, 148, 136, 0.12) !important;
+    }
+    @media (min-width: 992px) {
+      .auth-card {
+        display: grid !important;
+        grid-template-columns: 460px 1fr !important;
+        min-height: 640px !important;
+      }
+      .auth-showcase-panel {
+        display: flex !important;
+      }
+    }
+    @media (max-width: 991.98px) {
+      .auth-card {
+        display: flex !important;
+        flex-direction: column !important;
+        max-width: 480px !important;
+        margin: 0 auto !important;
+      }
+      .auth-showcase-panel {
+        display: none !important;
+      }
+    }
+    .auth-showcase-panel {
+      padding: 3rem 2.5rem !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    .auth-form-panel {
+      padding: 3rem 2.5rem !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    @media (max-width: 575.98px) {
+      .auth-form-panel {
+        padding: 2rem 1.5rem !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Atmospheric Ambient Glow Orbs -->
+  <div class="auth-wrapper">
+    <div class="ambient-glow-orb orb-teal"></div>
+    <div class="ambient-glow-orb orb-cyan"></div>
+    <div class="ambient-glow-orb orb-indigo"></div>
+
+    <div class="auth-container animate-in">
+      <div class="auth-card shadow-lg">
+        
+        <!-- Left Column: Medical Operations Showcase Panel (Hidden on small screens, grid item on lg) -->
+        <div class="auth-showcase-panel">
+          <div class="auth-showcase-content">
+            <!-- Facility Brand Tag -->
+            <div class="d-inline-flex align-items-center gap-2 bg-white bg-opacity-10 border border-white border-opacity-20 px-3 py-1 rounded-pill small mb-4 text-nowrap">
+              <span class="pulse-indicator-beacon" style="background-color: #5EEAD4; box-shadow: 0 0 0 4px rgba(94, 234, 212, 0.3);"></span>
+              <span class="fw-semibold text-white small" style="letter-spacing: 0.03em;">CarePulse MedOS &bull; Facility Command</span>
+            </div>
+
+            <h2 class="h3 fw-bold text-white mb-3" style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.65rem; line-height: 1.35; letter-spacing: -0.01em;">
+              Hospital Operations &amp;<br>Clinical Command
+            </h2>
+            <p class="text-white text-opacity-80 small mb-3">
+              Unified electronic medical records, patient encounters, specialist scheduling, and real-time revenue cycles.
+            </p>
+
+            <!-- Dynamic ECG Rhythm Heartbeat Wave -->
+            <div class="ecg-wave-box">
+              <svg class="ecg-svg" viewBox="0 0 500 50" preserveAspectRatio="none">
+                <path class="ecg-path" d="M0,25 L120,25 L130,10 L140,40 L150,15 L160,35 L170,25 L280,25 L290,5 L305,45 L315,15 L325,30 L335,25 L500,25" />
+              </svg>
+            </div>
+
+            <!-- Live Telemetry Badges -->
+            <div class="d-flex flex-column gap-3 mt-4">
+              <div class="showcase-stat-badge">
+                <div class="rounded-circle bg-white bg-opacity-20 p-2 d-flex align-items-center justify-content-center text-white" style="width: 36px; height: 36px;">
+                  <i class="bi bi-people-fill"></i>
+                </div>
+                <div>
+                  <div class="fw-bold text-white small">50 Registered Patients</div>
+                  <small class="text-white text-opacity-75" style="font-size: 0.75rem;">Complete health profiles &amp; history</small>
+                </div>
+              </div>
+
+              <div class="showcase-stat-badge">
+                <div class="rounded-circle bg-white bg-opacity-20 p-2 d-flex align-items-center justify-content-center text-white" style="width: 36px; height: 36px;">
+                  <i class="bi bi-heart-pulse-fill"></i>
+                </div>
+                <div>
+                  <div class="fw-bold text-white small">10 On-Duty Specialists</div>
+                  <small class="text-white text-opacity-75" style="font-size: 0.75rem;">Dermatology, Pediatrics, Oncology</small>
+                </div>
+              </div>
+
+              <div class="showcase-stat-badge">
+                <div class="rounded-circle bg-white bg-opacity-20 p-2 d-flex align-items-center justify-content-center text-white" style="width: 36px; height: 36px;">
+                  <i class="bi bi-shield-check"></i>
+                </div>
+                <div>
+                  <div class="fw-bold text-white small">Role-Based Access Control</div>
+                  <small class="text-white text-opacity-75" style="font-size: 0.75rem;">Cryptographic hash &amp; CSRF protected</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Interactive Authentication Form Panel -->
+        <div class="auth-form-panel">
+          
+          <!-- Theme Toggle Switcher -->
+          <button type="button" class="auth-theme-toggle" id="themeToggleBtn" aria-label="Toggle Clinical Light and Dark Mode" title="Toggle Theme">
+            <i class="bi bi-moon-stars" id="themeIcon"></i>
+          </button>
+
+          <!-- Header & Title -->
+          <div class="mb-4">
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <div class="brand-emblem-icon">
+                <i class="bi bi-hospital"></i>
+              </div>
+              <div>
+                <span class="badge bg-teal-subtle text-teal border border-teal-subtle px-2 py-1 rounded-pill small fw-semibold">
+                  Staff Gateway
+                </span>
+                <h1 class="h3 fw-bold mb-0 text-dark" style="font-family: 'Plus Jakarta Sans', sans-serif;">
+                  Hospital Portal
+                </h1>
+              </div>
+            </div>
+            <p class="text-muted small mb-0">
+              Welcome back. Sign in with your clinical or administrator credentials.
+            </p>
+          </div>
+
+          <!-- Flash Alert Messages -->
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              <div class="mb-3">
+                {% for category, message in messages %}
+                  <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show d-flex align-items-center gap-2 shadow-xs border" role="alert">
+                    <i class="bi {% if category == 'success' %}bi-check-circle-fill text-success{% elif category == 'info' %}bi-info-circle-fill text-info{% else %}bi-exclamation-triangle-fill text-danger{% endif %} fs-5"></i>
+                    <div class="small fw-semibold flex-grow-1">{{ message }}</div>
+                    <button type="button" class="btn-close small" data-bs-dismiss="alert" aria-label="Close"></button>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endif %}
+          {% endwith %}
+
+          <!-- Caps Lock Detection Banner (Dynamic) -->
+          <div id="capsLockAlert" class="alert alert-warning py-2 px-3 small mb-3 d-none d-flex align-items-center gap-2 rounded-3 border-warning" role="alert">
+            <i class="bi bi-capslock-fill text-warning"></i>
+            <span><strong>Caps Lock is ON!</strong> Passwords are case-sensitive.</span>
+          </div>
+
+          <!-- Authentication Form -->
+          <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}" id="loginForm" novalidate>
+            <!-- CSRF Protection Token -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <!-- Username Input Field -->
+            <div class="mb-3">
+              <label for="username" class="form-label fw-semibold text-secondary small mb-1">
+                Username
+              </label>
+              <div class="input-group auth-input-group">
+                <span class="input-group-text">
+                  <i class="bi bi-person-badge"></i>
+                </span>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  id="username" 
+                  name="username" 
+                  placeholder="Enter staff username" 
+                  value="{{ request.form.get('username', '') }}"
+                  autocomplete="username"
+                  required 
+                  autofocus
+                >
+              </div>
+            </div>
+
+            <!-- Password Input Field with Visibility Toggle -->
+            <div class="mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label for="password" class="form-label fw-semibold text-secondary small mb-0">
+                  Password
+                </label>
+                <span class="text-muted small" style="font-size: 0.75rem;">
+                  <i class="bi bi-shield-lock me-1"></i>Encrypted
+                </span>
+              </div>
+              <div class="input-group auth-input-group">
+                <span class="input-group-text">
+                  <i class="bi bi-lock"></i>
+                </span>
+                <input 
+                  type="password" 
+                  class="form-control" 
+                  id="password" 
+                  name="password" 
+                  placeholder="Enter secure password" 
+                  autocomplete="current-password"
+                  required
+                >
+                <button 
+                  class="btn toggle-password-visibility" 
+                  type="button" 
+                  data-target="password"
+                  aria-label="Toggle password visibility"
+                  title="Show / Hide Password"
+                >
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Remember Me -->
+            <div class="mb-4">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="rememberMe" checked>
+                <label class="form-check-label text-muted small" for="rememberMe">
+                  Remember this workstation
+                </label>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" id="loginSubmitBtn" class="btn btn-primary-custom w-100 d-flex align-items-center justify-content-center gap-2 hover-lift">
+              <i class="bi bi-box-arrow-in-right fs-5"></i>
+              <span id="btnText">Sign In to System</span>
+              <div class="spinner-border spinner-border-sm text-light d-none" id="btnSpinner" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </button>
+          </form>
+
+          <!-- Footer -->
+          <div class="mt-4 pt-3 border-top text-center">
+            <p class="text-muted small mb-0" style="font-size: 0.78rem;">
+              Hospital Management System &bull; Secure Operations Portal
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Custom JS -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+  <!-- Login Page Dedicated UX Scripts -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const usernameInput = document.getElementById("username");
+      const passwordInput = document.getElementById("password");
+      const capsLockAlert = document.getElementById("capsLockAlert");
+      const loginForm = document.getElementById("loginForm");
+      const loginSubmitBtn = document.getElementById("loginSubmitBtn");
+      const btnText = document.getElementById("btnText");
+      const btnSpinner = document.getElementById("btnSpinner");
+
+      // 2. Caps Lock State Detection
+      if (passwordInput && capsLockAlert) {
+        function checkCapsLock(e) {
+          if (e.getModifierState && e.getModifierState("CapsLock")) {
+            capsLockAlert.classList.remove("d-none");
+          } else {
+            capsLockAlert.classList.add("d-none");
+          }
+        }
+        passwordInput.addEventListener("keydown", checkCapsLock);
+        passwordInput.addEventListener("keyup", checkCapsLock);
+      }
+
+      // 3. Form Submit Progress State
+      if (loginForm && loginSubmitBtn) {
+        loginForm.addEventListener("submit", function () {
+          if (usernameInput.value && passwordInput.value) {
+            btnSpinner.classList.remove("d-none");
+            btnText.textContent = "Authenticating...";
+            loginSubmitBtn.disabled = true;
+            // Let the form submit normally
+          }
+        });
+      }
+
+      // 4. Tooltip Initialization
+      if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+          return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+      }
+    });
+  </script>
+</body>
+</html>
