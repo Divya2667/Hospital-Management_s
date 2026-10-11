@@ -14,8 +14,13 @@ class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-fallback-key-hospital-mgmt-academic-2025")
     
     # Instance directory for SQLite database storage
-    INSTANCE_PATH = BASE_DIR / "instance"
-    DATABASE = os.environ.get("DATABASE", str(INSTANCE_PATH / "hospital.db"))
+    # On Vercel, serverless containers are read-only except /tmp
+    if os.environ.get("VERCEL"):
+        INSTANCE_PATH = Path("/tmp")
+        DATABASE = os.environ.get("DATABASE", "/tmp/hospital.db")
+    else:
+        INSTANCE_PATH = BASE_DIR / "instance"
+        DATABASE = os.environ.get("DATABASE", str(INSTANCE_PATH / "hospital.db"))
 
     # Clinic Scheduling Settings
     CLINIC_OPEN_TIME = os.environ.get("CLINIC_OPEN_TIME", "09:00")

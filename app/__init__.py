@@ -8,7 +8,8 @@ csrf = CSRFProtect()
 
 def create_app(config_name=None, test_config=None):
     """Application factory for Hospital Management System."""
-    app = Flask(__name__, instance_relative_config=True)
+    instance_path = "/tmp" if os.environ.get("VERCEL") else None
+    app = Flask(__name__, instance_path=instance_path, instance_relative_config=True)
 
     # Ensure instance folder exists for SQLite storage
     try:

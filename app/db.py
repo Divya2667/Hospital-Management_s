@@ -1,4 +1,6 @@
+import os
 import sqlite3
+from pathlib import Path
 import click
 from flask import current_app, g
 
@@ -6,9 +8,30 @@ from flask import current_app, g
 def get_db():
     """Get or create the SQLite database connection for the current request context."""
     if "db" not in g:
-        g.db = sqlite3.connect(
-            current_app.config["DATABASE"]
-        )
+        db_path = current_app.config["DATABASE"]
+
+        # In Vercel serverless environment, auto-seed the SQLite database on first request
+        if os.environ.get("VERCEL") and db_path != ":memory:":
+            db_p = Path(db_path)
+            if not db_p.exists() or db_p.stat().st_size == 0:
+                try:
+                    db_p.parent.mkdir(parents=True, exist_ok=True)
+                except OSError:
+                    pass
+                g.db = sqlite3.connect(db_path)
+                g.db.row_factory = sqlite3.Row
+                g.db.execute("PRAGMA foreign_keys = ON;")
+                with current_app.open_resource("schema.sql", mode="r") as f:
+                    g.db.executescript(f.read())
+                g.db.commit()
+                try:
+                    from app.seeder import import_csv_dataset
+                    import_csv_dataset(g.db)
+                except Exception:
+                    pass
+                return g.db
+
+        g.db = sqlite3.connect(db_path)
         # Enable column access by name
         g.db.row_factory = sqlite3.Row
         # CRITICAL: Always enforce SQLite foreign-key constraints
